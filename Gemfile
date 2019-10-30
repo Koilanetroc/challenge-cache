@@ -15,3 +15,7 @@ gem "redis"
 gem "rubocop"
 
 gem "dotenv"
+
+gem "sidekiq"
+
+gem "sidekiq-scheduler"

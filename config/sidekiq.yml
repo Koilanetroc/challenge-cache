@@ -1,0 +1,8 @@
+:verbose: true
+:concurrency: 10
+:queues:
+    - default
+:schedule:
+  cache_worker:
+    every: ['30s', first_in: '1s']
+    class: CacheWorker
