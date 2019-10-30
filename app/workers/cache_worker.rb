@@ -12,7 +12,7 @@ class CacheWorker
   include Sidekiq::Worker
 
   def perform
-    logger.info "started"
+    # TODO: добавить локинг операции
 
     redis ||= Redis.new(url: ENV["REDIS_URL"]) # TODO: вынести в инициализатор
 
@@ -21,7 +21,5 @@ class CacheWorker
     response = JSON.parse(resp.body)
 
     redis.setex("wanted_value", 30, response)
-
-    logger.info "finished"
   end
 end

@@ -19,3 +19,5 @@ gem "dotenv"
 gem "sidekiq"
 
 gem "sidekiq-scheduler"
+
+gem "activesupport"
