@@ -1,6 +1,14 @@
-require 'sinatra'
+# frozen_string_literal: true
 
-get '/task' do
+require "sinatra"
+require "sinatra/reloader"
+require "securerandom"
+require "json"
+
+
+get "/task" do
   sleep(2)
-  'get response'
+
+  content_type :json
+  { result: SecureRandom.uuid, requested_at: Time.now.to_i }.to_json
 end
