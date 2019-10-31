@@ -21,3 +21,5 @@ gem "sidekiq"
 gem "sidekiq-scheduler"
 
 gem "activesupport"
+
+gem "redlock"

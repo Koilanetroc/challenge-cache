@@ -3,6 +3,8 @@
 require "sidekiq"
 require "sidekiq-scheduler"
 require "faraday"
+require "redlock"
+require_relative "../../config/initializers/redlock_manager"
 
 Sidekiq.configure_server do |config|
   config.redis = { url: ENV["REDIS_URL"] }
@@ -12,14 +14,24 @@ class CacheWorker
   include Sidekiq::Worker
 
   def perform
-    # TODO: добавить локинг операции
-
     redis ||= Redis.new(url: ENV["REDIS_URL"]) # TODO: вынести в инициализатор
 
-    resp = Faraday.new("http://localhost:5000/task").get
+    lock_key = "worker_is_locked"
+
+    @lock = RedlockManager.current.lock(lock_key, 28000)
+
+    logger.info @lock
+
+    return unless @lock
+
+    resp = Faraday.new("http://localhost:5000/task").get # TODO: вынести адрес в окружение
 
     response = JSON.parse(resp.body)
 
     redis.setex("wanted_value", 30, response)
+  rescue => error
+    RedlockManager.current.unlock(@lock)
+
+    raise error # Reraise
   end
 end
