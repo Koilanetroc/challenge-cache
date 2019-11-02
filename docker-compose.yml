@@ -4,3 +4,37 @@ services:
     image: redis:5-alpine
     ports:
       - 6379:6379
+  main_server:
+    build: .
+    ports:
+      - 3000:3000
+    depends_on:
+      - redis
+    command: ["bundle", "exec", "rackup", "--host", "0.0.0.0", "-p", "3000"]
+    volumes:
+      - ./:/app
+    links:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+  slow_server:
+    build: .
+    ports:
+      - 5000:5000
+    command: ["bundle", "exec", "ruby", "slow_server.rb", "-p", "5000"]
+    volumes:
+      - ./:/app
+  sidekiq:
+    build: .
+    depends_on:
+      - redis
+      - slow_server
+    links:
+      - redis
+      - slow_server
+    volumes:
+      - ./:/app
+    command: ["bundle", "exec", "sidekiq", "-r", "./app/workers/cache_worker.rb", "-C", "./config/sidekiq.yml"]
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - WEB_HOST=slow_server:5000

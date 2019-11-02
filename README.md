@@ -1,1 +1,4 @@
-## Description will be soon
+## Общее описание
+Решение трека Highload Dev для конкурса Uma.Challenge.
+
+## Техническая реализация

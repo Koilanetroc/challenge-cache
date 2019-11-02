@@ -3,8 +3,10 @@
 require "sinatra"
 require "sinatra/reloader"
 require "securerandom"
+require 'dotenv/load'
 require "json"
 
+set :bind, "0.0.0.0"
 
 get "/task" do
   sleep(2)

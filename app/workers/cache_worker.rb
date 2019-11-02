@@ -4,6 +4,7 @@ require "sidekiq"
 require "sidekiq-scheduler"
 require "faraday"
 require "redlock"
+require 'dotenv/load'
 require_relative "../../config/initializers/redlock_manager"
 
 Sidekiq.configure_server do |config|
@@ -18,13 +19,13 @@ class CacheWorker
 
     lock_key = "worker_is_locked"
 
-    @lock = RedlockManager.current.lock(lock_key, 28000)
+    @lock = RedlockManager.current.lock(lock_key, 28000) # QUESTION: а нужен ли лок вообще?
 
     logger.info @lock
 
     return unless @lock
 
-    resp = Faraday.new("http://localhost:5000/task").get # TODO: вынести адрес в окружение
+    resp = Faraday.new("http://#{ENV["WEB_HOST"]}/task").get # TODO: вынести адрес в окружение
 
     response = JSON.parse(resp.body)
 

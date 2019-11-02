@@ -6,55 +6,58 @@ require "faraday"
 require "redis"
 require "sidekiq"
 require "json"
+require 'dotenv/load'
 require "active_support/all"
 
 require_relative "app/workers/cache_worker"
 
-use Rack::Logger
+class App < Sinatra::Base
+  use Rack::Logger
 
-Sidekiq.configure_client do |config|
-  config.redis = { url: ENV["REDIS_URL"] }
-end
-
-helpers do
-  def logger
-    request.logger
-  end
-end
-
-before do
-  @redis ||= Redis.new(url: ENV["REDIS_URL"])
-end
-
-get "/" do
-  content_type :json
-
-  redis_key = "wanted_value"
-
-  30.times do |i|
-    @value = @redis.get redis_key
-
-    break unless @value.nil?
-
-    sleep 0.1
-    logger.warn "Bzzzz"
+  Sidekiq.configure_client do |config|
+    config.redis = { url: ENV["REDIS_URL"] }
   end
 
-  # TODO: добавить статусы
-  if @value.nil?
-    { error: "no_data" }.to_json
-  else
-    parsed_value = eval(@value)
+  helpers do
+    def logger
+      request.logger
+    end
+  end
 
-    ttl_secs = @redis.ttl(redis_key)
-    expires_at = Time.now + ttl_secs.seconds
+  before do
+    @redis ||= Redis.new(url: ENV["REDIS_URL"])
+  end
 
-    last_modified_at = Time.at(parsed_value["requested_at"])
+  get "/" do
+    content_type :json
 
-    expires expires_at, :public, :must_revalidate
-    etag parsed_value["token"]
-    last_modified last_modified_at
+    redis_key = "wanted_value"
 
-    @value
+    30.times do |i| # TODO: заменить цикл на что-то более терпимое, например очереди?
+      @value = @redis.get redis_key
+
+      break unless @value.nil?
+
+      sleep 0.1
+      logger.warn "Bzzzz"
+    end
+
+    if @value.nil?
+      status 512
+      { error: "no_data" }.to_json
+    else
+      parsed_value = eval(@value)
+
+      ttl_secs = @redis.ttl(redis_key)
+      expires_at = Time.now + ttl_secs.seconds
+
+      last_modified_at = Time.at(parsed_value["requested_at"])
+
+      expires expires_at, :private, :must_revalidate
+      etag parsed_value["token"] # QUESTION: правильно настроен?
+      last_modified last_modified_at
+
+      @value
+    end
   end
 end
