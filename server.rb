@@ -6,7 +6,7 @@ require "faraday"
 require "redis"
 require "sidekiq"
 require "json"
-require 'dotenv/load'
+require "dotenv/load"
 require "active_support/all"
 
 require_relative "app/workers/cache_worker"
@@ -33,7 +33,7 @@ class App < Sinatra::Base
 
     redis_key = "wanted_value"
 
-    30.times do |i| # TODO: заменить цикл на что-то более терпимое, например очереди?
+    30.times do |i| # TODO: заменить цикл на что-то более терпимое?
       @value = @redis.get redis_key
 
       break unless @value.nil?
@@ -53,10 +53,12 @@ class App < Sinatra::Base
 
       last_modified_at = Time.at(parsed_value["requested_at"])
 
+      ## Cache-Control headers
       expires expires_at, :private, :must_revalidate
       etag parsed_value["token"] # QUESTION: правильно настроен?
       last_modified last_modified_at
 
+      status 200
       @value
     end
   end

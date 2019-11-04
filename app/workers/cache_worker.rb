@@ -4,7 +4,7 @@ require "sidekiq"
 require "sidekiq-scheduler"
 require "faraday"
 require "redlock"
-require 'dotenv/load'
+require "dotenv/load"
 require_relative "../../config/initializers/redlock_manager"
 
 Sidekiq.configure_server do |config|
@@ -30,6 +30,8 @@ class CacheWorker
     response = JSON.parse(resp.body)
 
     redis.setex("wanted_value", 30, response)
+
+    # QUESTION: Если мы вдруг обратились слишком рано и ответ еще вернетя старый, то это херово и нужно запускать воркера еще раз?
   rescue => error
     RedlockManager.current.unlock(@lock)
 
