@@ -33,13 +33,14 @@ class App < Sinatra::Base
 
     redis_key = "important_value"
 
-    30.times do |i| # TODO: заменить цикл на что-то более терпимое?
+    20.times do |i|
       @value = @redis.get redis_key
 
       break unless @value.nil?
 
       sleep 0.1
-      logger.warn "Bzzzz"
+
+      logger.warn "wait a bit..."
     end
 
     if @value.nil?
@@ -48,14 +49,13 @@ class App < Sinatra::Base
     else
       parsed_value = eval(@value)
 
-      ttl_secs = @redis.ttl(redis_key)
-      expires_at = Time.now + ttl_secs.seconds
+      expires_at = Time.at(parsed_value["cached_at"]) + 30.seconds
 
       last_modified_at = Time.at(parsed_value["requested_at"])
 
       ## Cache-Control headers
       expires expires_at, :private, :must_revalidate
-      etag parsed_value["token"] # QUESTION: правильно настроен?
+      etag parsed_value["token"]
       last_modified last_modified_at
 
       status 200
