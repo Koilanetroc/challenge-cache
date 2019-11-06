@@ -31,7 +31,7 @@ class App < Sinatra::Base
   get "/" do
     content_type :json
 
-    redis_key = "wanted_value"
+    redis_key = "important_value"
 
     30.times do |i| # TODO: заменить цикл на что-то более терпимое?
       @value = @redis.get redis_key
