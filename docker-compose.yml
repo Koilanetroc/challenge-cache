@@ -18,14 +18,14 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
   slow_server:
-    image: backend_cache_main_server
+    build: .
     ports:
       - 5000:5000
     command: ["bundle", "exec", "ruby", "slow_server.rb", "-p", "5000"]
     volumes:
       - ./:/app
   sidekiq:
-    image: backend_cache_main_server
+    build: .
     depends_on:
       - redis
       - slow_server
